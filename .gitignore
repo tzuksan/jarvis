@@ -65,3 +65,46 @@ cache/
 # OS
 Thumbs.db
 .DS_Store
+
+# Local Python environments and cache
+.venv/
+.venv311/
+venv/
+__pycache__/
+*.py[cod]
+
+# Secrets
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+
+# Local backups
+*.backup
+*.backup_*
+*.streaming_backup
+*.before_screen_integration_*
+*.before_streaming_*
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+simpaudio-test/
+stimmen-test/
+
+# Local test audio
+Jarvis_Test.mp3
+Jarvis_Florian_Test.mp3
+
+# Local model files and screenshots
+models/
+screenshots/
+
+# Local audio and temporary backup files
+Jarvis_Florian_Dunkel.mp3
+jarvis_stimme.mp3
+*.streaming_backup_*
+*.syntax-backup

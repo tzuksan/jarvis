@@ -21,13 +21,13 @@ class OllamaProvider(LLMProvider):
     Requirements:
         - Ollama installed: https://ollama.ai
         - Running locally: ollama serve
-        - Model pulled: ollama pull mistral (or your choice)
+        - Model pulled: ollama pull llama3.1:8b (or your choice)
     """
 
     def __init__(
         self,
         base_url: str = "http://localhost:11434",
-        model: str = "mistral",
+        model: str = "llama3.1:8b",
         temperature: float = 0.7,
         max_tokens: int = 2000,
         timeout_seconds: int = 60,
@@ -36,7 +36,7 @@ class OllamaProvider(LLMProvider):
         
         Args:
             base_url: Ollama API base URL (default: localhost:11434)
-            model: Model name (default: mistral)
+            model: Model name (default: llama3.1:8b)
             temperature: Creativity level (default: 0.7)
             max_tokens: Max response length (default: 2000)
             timeout_seconds: API timeout (default: 60)
@@ -50,6 +50,11 @@ class OllamaProvider(LLMProvider):
         self.base_url = base_url.rstrip("/")
         self._client: Optional[httpx.AsyncClient] = None
 
+    def get_info(self):
+        """Return provider information, including the Ollama API URL."""
+        info = super().get_info()
+        info["base_url"] = self.base_url
+        return info
     async def _get_client(self) -> httpx.AsyncClient:
         """Get or create HTTP client"""
         if self._client is None:
@@ -152,6 +157,91 @@ class OllamaProvider(LLMProvider):
             logger.error(f"Invalid Ollama response format: {e}")
             raise ValueError(f"Invalid Ollama response: {e}")
 
+    async def generate_stream(
+        self,
+        messages: List[Message],
+        system_prompt: Optional[str] = None,
+        tools_available: bool = False,
+    ):
+        """Stream response text from Ollama one chunk at a time."""
+        api_messages = []
+
+        if system_prompt:
+            api_messages.append({"role": "system", "content": system_prompt})
+
+        for msg in messages:
+            api_messages.append({
+                "role": msg.role,
+                "content": msg.content,
+            })
+
+        client = await self._get_client()
+        response_text = ""
+
+        try:
+            async with client.stream(
+                "POST",
+                "/api/chat",
+                json={
+                    "model": self.model,
+                    "messages": api_messages,
+                    "stream": True,
+                    "options": {
+                        "temperature": self.temperature,
+                        "num_predict": self.max_tokens,
+                    },
+                },
+            ) as response:
+                if response.status_code != 200:
+                    error_text = (await response.aread()).decode(
+                        "utf-8", errors="replace"
+                    )
+                    logger.error(
+                        "Ollama streaming error %s: %s",
+                        response.status_code,
+                        error_text,
+                    )
+                    raise ValueError(
+                        f"Ollama API error: {response.status_code}"
+                    )
+
+                async for line in response.aiter_lines():
+                    if not line.strip():
+                        continue
+
+                    try:
+                        data = json.loads(line)
+                    except json.JSONDecodeError as exc:
+                        logger.warning("Invalid Ollama stream line: %s", exc)
+                        continue
+
+                    if data.get("error"):
+                        raise ValueError(f"Ollama error: {data['error']}")
+
+                    chunk = data.get("message", {}).get("content", "")
+                    if chunk:
+                        response_text += chunk
+                        yield chunk
+
+                    if data.get("done"):
+                        break
+
+            self._call_count += 1
+            estimated_tokens = (
+                sum(len(m["content"].split()) for m in api_messages)
+                + len(response_text.split())
+            )
+            self._token_count += estimated_tokens
+
+        except httpx.ConnectError as exc:
+            logger.error("Cannot connect to Ollama at %s: %s", self.base_url, exc)
+            raise ValueError(
+                f"Cannot connect to Ollama. Make sure it's running: "
+                f"ollama serve. URL: {self.base_url}"
+            ) from exc
+        except httpx.HTTPError as exc:
+            logger.error("Ollama HTTP error: %s", exc)
+            raise ValueError(f"Ollama HTTP error: {exc}") from exc
     async def __aenter__(self):
         """Async context manager entry"""
         return self
@@ -159,4 +249,6 @@ class OllamaProvider(LLMProvider):
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Async context manager exit"""
         await self.close()
+
+
 

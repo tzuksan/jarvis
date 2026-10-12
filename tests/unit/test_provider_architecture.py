@@ -1,4 +1,4 @@
-"""Unit tests for provider-agnostic LLM system
+﻿"""Unit tests for provider-agnostic LLM system
 
 These tests verify that JARVIS's LLM architecture is truly provider-agnostic.
 """
@@ -257,7 +257,7 @@ class TestProviderDefaultValues:
         settings = Settings()
         
         assert settings.llm_provider == "ollama"
-        assert settings.ollama_model == "mistral"
+        assert settings.ollama_model == "llama3.1:8b"
         assert settings.llm_temperature == 0.7
         assert settings.llm_max_tokens == 2000
         assert settings.llm_timeout_seconds == 60
@@ -276,4 +276,5 @@ class TestProviderDefaultValues:
         assert provider.model == "neural-chat"
         assert provider.temperature == 0.5
         assert provider.max_tokens == 1000
+
 

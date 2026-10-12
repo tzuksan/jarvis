@@ -1,4 +1,4 @@
-"""Configuration management for JARVIS AI Core"""
+﻿"""Configuration management for JARVIS AI Core"""
 
 from functools import lru_cache
 from pydantic_settings import BaseSettings
@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     
     # Ollama Configuration (Local, Primary)
     ollama_base_url: str = "http://localhost:11434"
-    ollama_model: str = "mistral"  # or "neural-chat", "dolphin-mixtral", etc.
+    ollama_model: str = "llama3.1:8b"  # or "neural-chat", "dolphin-mixtral", etc.
     
     # OpenAI Configuration (Cloud fallback)
     openai_api_key: str = ""
@@ -66,3 +66,4 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """Get cached settings instance"""
     return Settings()
+

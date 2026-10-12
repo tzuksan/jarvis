@@ -1,14 +1,14 @@
-"""
-Integration Tests für Ollama Provider
+﻿"""
+Integration Tests fÃ¼r Ollama Provider
 ======================================
 
-Diese Tests prüfen die ECHTE Verbindung zu Ollama, nicht gemockt!
+Diese Tests prÃ¼fen die ECHTE Verbindung zu Ollama, nicht gemockt!
 
 Unterschied zu Unit Tests:
 - Unit Tests (tests/unit/): Mocken externe Dependencies, testen Logik
 - Integration Tests (tests/integration/): Testen echte externe Services
 
-Diese Tests werden nur ausgeführt, wenn Ollama verfügbar ist.
+Diese Tests werden nur ausgefÃ¼hrt, wenn Ollama verfÃ¼gbar ist.
 """
 
 import pytest
@@ -26,7 +26,7 @@ class TestOllamaIntegration:
     """
     ECHTE Ollama Integration Tests
     
-    Diese Tests werden nur ausgeführt wenn Ollama läuft!
+    Diese Tests werden nur ausgefÃ¼hrt wenn Ollama lÃ¤uft!
     """
 
     @pytest.mark.ollama
@@ -51,13 +51,13 @@ class TestOllamaIntegration:
         assert response.model == provider.model
         assert response.tokens_used > 0
         
-        logger.info(f"✅ Ollama Response: {response.text[:100]}...")
+        logger.info(f"âœ… Ollama Response: {response.text[:100]}...")
 
     @pytest.mark.ollama
     @pytest.mark.asyncio
     async def test_ollama_model_info(self, requires_ollama):
         """
-        Test: Welches Modell läuft auf Ollama?
+        Test: Welches Modell lÃ¤uft auf Ollama?
         
         Zeigt:
         - Modellname
@@ -72,19 +72,19 @@ class TestOllamaIntegration:
         assert "base_url" in info
         assert "provider" in info
         
-        logger.info(f"✅ Ollama Model: {info['model']}")
-        logger.info(f"✅ Ollama URL: {info['base_url']}")
-        logger.info(f"✅ Provider: {info['provider']}")
+        logger.info(f"âœ… Ollama Model: {info['model']}")
+        logger.info(f"âœ… Ollama URL: {info['base_url']}")
+        logger.info(f"âœ… Provider: {info['provider']}")
 
     @pytest.mark.ollama
     @pytest.mark.asyncio
     async def test_ollama_multi_turn_conversation(self, requires_ollama):
         """
-        Test: Kann JARVIS eine mehrteilige Konversation führen?
+        Test: Kann JARVIS eine mehrteilige Konversation fÃ¼hren?
         
         Simulates:
             Turn 1: User: "Ich bin Max"
-            Turn 2: Assistant: "Schön dich kennenzulernen, Max!"
+            Turn 2: Assistant: "SchÃ¶n dich kennenzulernen, Max!"
             Turn 3: User: "Was ist mein Name?"
             Turn 4: Assistant: "Dein Name ist Max"
         """
@@ -115,25 +115,25 @@ class TestOllamaIntegration:
         Test: Wird die Nutzung des Modells tracked?
         
         Sollte nach Aufrufen:
-        - call_count erhöht sich
-        - token_count erhöht sich (Schätzung)
+        - call_count erhÃ¶ht sich
+        - token_count erhÃ¶ht sich (SchÃ¤tzung)
         """
         provider = OllamaProvider()
-        initial_calls = provider.stats.call_count
-        initial_tokens = provider.stats.token_count
+        initial_calls = provider.stats["call_count"]
+        initial_tokens = provider.stats["total_tokens"]
         
         # Mache einen Aufruf
         messages = [Message(role="user", content="Hallo")]
         response = await provider.generate(messages)
         
-        # Prüfe ob Stats aktualisiert wurden
-        assert provider.stats.call_count > initial_calls
-        assert provider.stats.token_count >= initial_tokens
+        # PrÃ¼fe ob Stats aktualisiert wurden
+        assert provider.stats["call_count"] > initial_calls
+        assert provider.stats["total_tokens"] >= initial_tokens
         
         logger.info(
-            f"✅ Stats tracked: "
-            f"calls={provider.stats.call_count}, "
-            f"tokens={provider.stats.token_count}"
+            f"âœ… Stats tracked: "
+            f"calls={provider.stats['call_count']}, "
+            f"tokens={provider.stats['total_tokens']}"
         )
 
     @pytest.mark.ollama
@@ -148,9 +148,9 @@ class TestOllamaIntegration:
             Ollama sollte auf Deutsch antworten
         """
         provider = OllamaProvider()
-        system_prompt = "Antworte immer kurz und prägnant. Max. 10 Wörter."
+        system_prompt = "Antworte immer kurz und prÃ¤gnant. Max. 10 WÃ¶rter."
         messages = [
-            Message(role="user", content="Erzähle mir einen Witz")
+            Message(role="user", content="ErzÃ¤hle mir einen Witz")
         ]
         
         response = await provider.generate(
@@ -160,11 +160,11 @@ class TestOllamaIntegration:
         
         assert len(response.text) > 0
         
-        # Zähle Wörter (ungenaue Prüfung)
+        # ZÃ¤hle WÃ¶rter (ungenaue PrÃ¼fung)
         word_count = len(response.text.split())
         logger.info(
-            f"✅ System prompt tested: "
-            f"Antwort hatte {word_count} Wörter "
+            f"âœ… System prompt tested: "
+            f"Antwort hatte {word_count} WÃ¶rter "
             f"(max 10 angefordert)"
         )
 
@@ -175,7 +175,7 @@ class TestOllamaErrorHandling:
     @pytest.mark.asyncio
     async def test_ollama_connection_error_message(self):
         """
-        Test: Ist die Fehlermeldung hilfreich wenn Ollama nicht läuft?
+        Test: Ist die Fehlermeldung hilfreich wenn Ollama nicht lÃ¤uft?
         
         Should show:
             ValueError: "Cannot connect to Ollama...
@@ -192,10 +192,12 @@ class TestOllamaErrorHandling:
         
         # Validiere dass Error Message hilfreich ist
         assert "Make sure Ollama is running" in error_msg or "Cannot connect" in error_msg
-        logger.info(f"✅ Error message is helpful: {error_msg}")
+        logger.info(f"âœ… Error message is helpful: {error_msg}")
 
 
 if __name__ == "__main__":
-    # Für schnelle lokale Tests:
+    # FÃ¼r schnelle lokale Tests:
     # python -m pytest tests/integration/test_ollama_integration.py -v -m ollama
     pytest.main([__file__, "-v", "-s", "-m", "ollama"])
+
+
